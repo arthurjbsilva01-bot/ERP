@@ -1,273 +1,271 @@
 <!DOCTYPE html>
-<html lang="pt-br" class="dark">
+<html lang="pt-br" data-theme="light">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>EletronicFix | Carbon ERP</title>
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EletronicFix | ERP Professional</title>
     <link href="https://cdn.jsdelivr.net/npm/daisyui@4.4.19/dist/full.min.css" rel="stylesheet" type="text/css" />
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
-        :root { --p-color: #10b981; --bg-main: #050505; }
-        body { background-color: var(--bg-main); font-family: 'Plus Jakarta Sans', sans-serif; color: #e2e8f0; overflow-x: hidden; }
-        .glass { background: rgba(23, 23, 23, 0.7); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.05); }
-        .nav-active { color: var(--p-color) !important; background: rgba(16, 185, 129, 0.1); border-radius: 16px; box-shadow: 0 0 15px rgba(16, 185, 129, 0.2); }
+        :root { 
+            --p: 82 85% 62%; /* Verde Lima */
+            --s: 24 95% 53%; /* Laranja */
+        }
+        body { background-color: #f8fafc; color: #1e293b; font-family: 'Inter', sans-serif; }
+        .sidebar-bg { background-color: #0f172a; }
+        .sidebar-active { background-color: rgba(179, 242, 77, 0.15); color: #b3f24d; border-left: 4px solid #b3f24d; }
         .page-section { display: none; }
-        .page-section.active { display: block; animation: pageIn 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
-        @keyframes pageIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .btn-carbon { background: linear-gradient(135deg, #10b981, #059669); color: #fff; font-weight: 800; border: none; transition: all 0.3s; }
-        .btn-carbon:hover { transform: translateY(-2px); box-shadow: 0 10px 20px -10px #10b981; }
-        .modal-box { background: #0a0a0a; border: 1px solid #1f1f23; border-radius: 28px; padding: 0; max-height: 95vh; }
-        input, select, textarea { background: #111 !important; border: 1px solid #222 !important; color: #fff !important; border-radius: 14px !important; }
-        input:focus { border-color: var(--p-color) !important; box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2) !important; }
+        .page-section.active { display: block; }
+        .card-fix { background: white; border: 1px solid #e2e8f0; border-radius: 1rem; }
+        
+        /* Badges de Status */
+        .badge-aberta { background-color: #f97316; color: white; border: none; font-weight: bold; }
+        .badge-finalizada { background-color: #b3f24d; color: #064e3b; border: none; font-weight: bold; }
+        
+        /* Ajuste de Modais para ficarem completos */
+        .modal-box { max-height: 95vh; padding: 2rem; border-radius: 1.5rem; }
     </style>
 </head>
-<body class="pb-24 md:pb-0 md:pl-72">
+<body class="min-h-screen">
 
-    <aside class="fixed inset-y-0 left-0 w-72 hidden md:flex flex-col glass border-r border-white/5 z-50 p-6">
-        <div class="mb-12 flex justify-center"><img src="logo.png" class="h-16 object-contain"></div>
-        <nav class="space-y-3 flex-1">
-            <button onclick="go('sec-dash')" id="d-dash" class="flex items-center gap-4 w-full p-4 nav-active font-bold"><i data-lucide="layout-grid"></i> Dashboard</button>
-            <button onclick="go('sec-clientes')" id="d-clientes" class="flex items-center gap-4 w-full p-4 font-bold opacity-40 hover:opacity-100 transition-all"><i data-lucide="user-square-2"></i> Clientes</button>
-            <button onclick="go('sec-os')" id="d-os" class="flex items-center gap-4 w-full p-4 font-bold opacity-40 hover:opacity-100 transition-all"><i data-lucide="cpu"></i> Ordens de Serviço</button>
-        </nav>
-        <div class="mt-auto p-5 rounded-2xl bg-white/5 text-center"><p class="text-[10px] font-black uppercase tracking-widest text-emerald-500">EletronicFix Pro 2026</p></div>
-    </aside>
-
-    <nav class="md:hidden fixed bottom-6 left-6 right-6 h-18 glass rounded-[2rem] flex justify-around items-center z-50 shadow-2xl px-2">
-        <button onclick="go('sec-dash')" id="m-dash" class="p-4 nav-active"><i data-lucide="layout-grid"></i></button>
-        <button onclick="go('sec-clientes')" id="m-clientes" class="p-4 opacity-30"><i data-lucide="user-square-2"></i></button>
-        <button onclick="go('sec-os')" id="m-os" class="p-4 opacity-30"><i data-lucide="cpu"></i></button>
-    </nav>
-
-    <main class="p-6 md:p-14 max-w-6xl mx-auto">
+    <div class="drawer lg:drawer-open">
+        <input id="my-drawer" type="checkbox" class="drawer-toggle" />
         
-        <section id="sec-dash" class="page-section active">
-            <div class="flex items-center justify-between mb-12">
-                <h1 class="text-3xl font-black tracking-tighter">CENTRAL DE COMANDO</h1>
-                <div class="badge badge-success gap-2 p-4 font-bold text-xs"><div class="w-2 h-2 rounded-full bg-white animate-pulse"></div> LIVE DATA</div>
-            </div>
-            <div class="grid grid-cols-2 gap-4">
-                <div class="glass p-8 rounded-[2.5rem] relative overflow-hidden group">
-                    <i data-lucide="users" class="absolute -right-2 -bottom-2 w-24 h-24 opacity-5 text-emerald-500 group-hover:scale-110 transition-transform"></i>
-                    <p class="text-4xl font-black text-white" id="dash-clientes">0</p>
-                    <p class="text-[10px] font-bold uppercase opacity-40 tracking-widest">Base de Clientes</p>
-                </div>
-                <div class="glass p-8 rounded-[2.5rem] relative overflow-hidden group">
-                    <i data-lucide="wrench" class="absolute -right-2 -bottom-2 w-24 h-24 opacity-5 text-blue-500 group-hover:scale-110 transition-transform"></i>
-                    <p class="text-4xl font-black text-white" id="dash-os">0</p>
-                    <p class="text-[10px] font-bold uppercase opacity-40 tracking-widest">Serviços Ativos</p>
-                </div>
-            </div>
-        </section>
-
-        <section id="sec-clientes" class="page-section">
-            <div class="flex justify-between items-center mb-10">
-                <h1 class="text-4xl font-black tracking-tighter italic">CLIENTES</h1>
-                <button class="btn btn-carbon btn-sm md:btn-md px-8 rounded-2xl" onclick="abrirModalCliente()">+ ADICIONAR</button>
-            </div>
-            <div id="lista-clientes" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
-        </section>
-
-        <section id="sec-os" class="page-section">
-            <div class="flex justify-between items-center mb-10">
-                <h1 class="text-4xl font-black tracking-tighter italic">ORDENS</h1>
-                <button class="btn btn-carbon btn-sm md:btn-md px-8 rounded-2xl" onclick="abrirModalOS()">+ NOVA O.S</button>
-            </div>
-            <div class="glass rounded-3xl overflow-hidden shadow-2xl">
-                <div class="overflow-x-auto"><table class="table w-full"><thead class="bg-white/5"><tr><th class="py-6">PROTOCOLO</th><th>APARELHO</th><th class="text-center">PDF</th></tr></thead><tbody id="lista-os"></tbody></table></div>
-            </div>
-        </section>
-    </main>
-
-    <dialog id="modal_cliente" class="modal modal-bottom sm:modal-middle">
-        <div class="modal-box w-11/12 max-w-4xl">
-            <div class="p-8 border-b border-white/5 flex justify-between items-center bg-white/5">
-                <h3 class="font-black text-xl italic uppercase tracking-widest text-emerald-500">Gestão de Identidade</h3>
-                <button class="btn btn-sm btn-circle btn-ghost" onclick="modal_cliente.close()">✕</button>
-            </div>
-            <form id="form-cliente" onsubmit="salvarCliente(event)" class="p-8 space-y-6 overflow-y-auto">
-                <input type="hidden" id="c-id">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="space-y-4">
-                        <label class="text-[10px] font-bold opacity-40 uppercase">Nome e Contato</label>
-                        <input type="text" id="c-nome" placeholder="Nome Completo *" class="input w-full font-bold h-14" required />
-                        <input type="text" id="c-whatsapp" placeholder="WhatsApp" class="input w-full h-14" oninput="maskWhatsApp(this)" maxlength="15" />
-                        <input type="text" id="c-cpf" placeholder="CPF ou CNPJ" class="input w-full h-14" oninput="maskCPF(this)" maxlength="18" />
-                        <input type="email" id="c-email" placeholder="E-mail" class="input w-full h-14" />
-                    </div>
-                    <div class="space-y-4">
-                        <label class="text-[10px] font-bold opacity-40 uppercase">Localização</label>
-                        <div class="grid grid-cols-3 gap-2">
-                            <input type="text" id="c-cep" placeholder="CEP" class="input border-emerald-500/30 font-black text-emerald-500" oninput="maskCEP(this)" onblur="buscarCep(this.value)" maxlength="9" />
-                            <input type="text" id="c-cidade" placeholder="Cidade" class="input col-span-2" />
+        <div class="drawer-content flex flex-col">
+            <main class="p-6 md:p-10">
+                <section id="sec-dash" class="page-section active">
+                    <h1 class="text-4xl font-black mb-10 text-slate-800 italic uppercase">Resumo EletronicFix</h1>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                        <div class="stats card-fix border-t-8 border-orange-500 shadow-lg">
+                            <div class="stat">
+                                <div class="stat-title text-orange-600 font-bold uppercase text-sm">O.S Abertas</div>
+                                <div class="stat-value text-orange-600" id="dash-abertas">0</div>
+                            </div>
                         </div>
-                        <input type="text" id="c-rua" placeholder="Logradouro" class="input w-full" />
-                        <input type="text" id="c-numero" placeholder="Número" class="input w-full" />
-                        <textarea id="c-obs" placeholder="Notas internas..." class="textarea w-full h-14"></textarea>
+                        <div class="stats card-fix border-t-8 border-green-500 shadow-lg">
+                            <div class="stat">
+                                <div class="stat-title text-green-600 font-bold uppercase text-sm">O.S Finalizadas</div>
+                                <div class="stat-value text-green-600" id="dash-finalizadas">0</div>
+                            </div>
+                        </div>
                     </div>
+                </section>
+
+                <section id="sec-clientes" class="page-section">
+                    <div class="flex justify-between items-center mb-8">
+                        <h1 class="text-3xl font-black text-slate-800 uppercase italic">Gestão de Clientes</h1>
+                        <button class="btn bg-[#b3f24d] hover:bg-[#a2db45] border-none text-slate-900 font-black px-8" onclick="prepararNovoCliente()">+ NOVO CLIENTE</button>
+                    </div>
+                    <div class="card card-fix shadow-md overflow-x-auto">
+                        <table class="table w-full">
+                            <thead class="bg-slate-50 text-slate-500">
+                                <tr><th>ID</th><th>NOME</th><th>WHATSAPP</th><th class="text-center">AÇÕES</th></tr>
+                            </thead>
+                            <tbody id="lista-clientes" class="font-medium"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section id="sec-os" class="page-section">
+                    <div class="flex justify-between items-center mb-8">
+                        <h1 class="text-3xl font-black text-slate-800 uppercase italic">Ordens de Serviço</h1>
+                        <button class="btn bg-[#b3f24d] hover:bg-[#a2db45] border-none text-slate-900 font-black px-8" onclick="prepararNovaOS()">+ NOVA OS</button>
+                    </div>
+                    <div class="card card-fix shadow-md overflow-x-auto">
+                        <table class="table w-full">
+                            <thead class="bg-slate-50 text-slate-500">
+                                <tr><th>Nº OS</th><th>CLIENTE</th><th>APARELHO</th><th>STATUS</th><th class="text-center">AÇÕES</th></tr>
+                            </thead>
+                            <tbody id="lista-os" class="font-medium"></tbody>
+                        </table>
+                    </div>
+                </section>
+            </main>
+        </div>
+
+        <div class="drawer-side z-20">
+            <label for="my-drawer" class="drawer-overlay"></label>
+            <aside class="sidebar-bg w-72 min-h-full flex flex-col text-white">
+                <div class="p-8 border-b border-slate-800 text-center">
+                    <img src="logo.png" class="h-32 mx-auto object-contain mb-2">
                 </div>
-                <button type="submit" class="btn btn-carbon w-full h-16 text-lg italic uppercase">Efetivar Registro</button>
+                <ul class="menu p-4 gap-2 font-bold mt-4">
+                    <li><a href="#" onclick="switchPage('sec-dash')" id="nav-dash" class="sidebar-active">📊 DASHBOARD</a></li>
+                    <li><a href="#" onclick="switchPage('sec-clientes')" id="nav-clientes">👥 CLIENTES</a></li>
+                    <li><a href="#" onclick="switchPage('sec-os')" id="nav-os">🛠️ ORDENS DE SERVIÇO</a></li>
+                </ul>
+            </aside>
+        </div>
+    </div>
+
+    <dialog id="modal_cliente" class="modal">
+        <div class="modal-box w-11/12 max-w-4xl bg-white">
+            <h3 class="font-black text-2xl text-slate-800 mb-8 border-b pb-4" id="titulo-modal-cliente">Cadastro de Cliente</h3>
+            <form id="form-cliente" onsubmit="salvarCliente(event)" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <input type="hidden" id="c-id" value="">
+                <input type="text" id="c-nome" placeholder="Nome Completo *" class="input input-bordered w-full" required />
+                <input type="text" id="c-whatsapp" placeholder="WhatsApp" class="input input-bordered w-full" oninput="maskWhatsApp(this)" maxlength="15" />
+                <input type="text" id="c-cpf" placeholder="CPF/CNPJ" class="input input-bordered w-full" oninput="maskCPF(this)" maxlength="18" />
+                <input type="email" id="c-email" placeholder="E-mail" class="input input-bordered w-full" />
+                <input type="text" id="c-cep" placeholder="CEP" class="input input-bordered" oninput="maskCEP(this)" maxlength="9" onblur="buscarCep(this.value)" />
+                <input type="text" id="c-cidade" placeholder="Cidade" class="input input-bordered" />
+                <input type="text" id="c-rua" placeholder="Rua" class="input input-bordered" />
+                <input type="text" id="c-numero" placeholder="Nº" class="input input-bordered" />
+                <div class="modal-action col-span-full border-t pt-6">
+                    <button type="button" class="btn" onclick="modal_cliente.close()">Cancelar</button>
+                    <button type="submit" class="btn bg-[#b3f24d] hover:bg-[#a2db45] text-slate-900 border-none px-10 font-black">Salvar Cliente</button>
+                </div>
             </form>
         </div>
     </dialog>
 
-    <dialog id="modal_os" class="modal modal-bottom sm:modal-middle">
-        <div class="modal-box w-11/12 max-w-4xl">
-            <div class="p-8 border-b border-white/5 font-black uppercase text-blue-500 italic">Central de Reparo</div>
-            <form id="form-os" onsubmit="salvarOS(event)" class="p-8 space-y-8">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <select id="os-cliente" class="select select-bordered w-full h-14 font-black" required></select>
-                    <input type="text" id="os-equipamento" placeholder="Equipamento" class="input w-full h-14 font-bold" required />
-                    <textarea id="os-defeito" placeholder="Defeito do Cliente" class="textarea h-24" required></textarea>
-                    <textarea id="os-laudo" placeholder="Sua Solução Técnica" class="textarea border-emerald-500/30 h-24"></textarea>
+    <dialog id="modal_os" class="modal">
+        <div class="modal-box w-11/12 max-w-2xl bg-white">
+            <h3 class="font-black text-2xl text-slate-800 mb-8 border-b pb-4" id="titulo-modal-os">Nova Ordem de Serviço</h3>
+            <form id="form-os" onsubmit="salvarOS(event)" class="space-y-6">
+                <input type="hidden" id="os-id" value="">
+                <select id="os-cliente" class="select select-bordered w-full font-bold" required></select>
+                <input type="text" id="os-equipamento" placeholder="Aparelho / Equipamento" class="input input-bordered w-full" required />
+                <textarea id="os-defeito" placeholder="Defeito Relatado" class="textarea textarea-bordered w-full h-24" required></textarea>
+                <div class="grid grid-cols-3 gap-4">
+                    <select id="os-status-form" class="select select-bordered w-full font-bold">
+                        <option value="Aberta">Aberta</option>
+                        <option value="Finalizada">Finalizada</option>
+                    </select>
+                    <input type="number" id="os-valor" placeholder="Valor R$" class="input input-bordered" step="0.01" />
+                    <input type="number" id="os-garantia" placeholder="Garantia" class="input input-bordered" value="90" />
                 </div>
-                <div class="p-6 rounded-[2rem] bg-white/5 border border-white/5">
-                    <h4 class="text-[10px] font-black uppercase text-emerald-500 mb-6 tracking-widest">Detalhamento Financeiro</h4>
-                    <div id="container-itens" class="space-y-3"></div>
-                    <button type="button" class="btn btn-ghost btn-xs mt-4 text-emerald-500" onclick="addItem()">+ INSERIR ITEM/SERVIÇO</button>
+                <div class="modal-action border-t pt-6">
+                    <button type="button" class="btn" onclick="modal_os.close()">Cancelar</button>
+                    <button type="submit" class="btn bg-[#b3f24d] hover:bg-[#a2db45] text-slate-900 border-none px-10 font-black">Salvar O.S</button>
                 </div>
-                <div class="flex justify-between items-center bg-emerald-500/10 p-6 rounded-3xl border border-emerald-500/20">
-                    <span class="text-xs font-black uppercase opacity-60">Valor Consolidado</span>
-                    <span class="text-4xl font-black text-emerald-500" id="total-display">R$ 0,00</span>
-                </div>
-                <button type="submit" class="btn btn-carbon w-full h-16 text-lg italic">FINALIZAR E GERAR DOCUMENTO</button>
             </form>
         </div>
     </dialog>
 
     <script>
-        const SUPABASE_URL = 'https://tiwolqggaatrrpuahsvu.supabase.co';
-        const SUPABASE_KEY = 'sb_publishable_ro9Yx3P9H-nM9Vgt0lA6eg_Eoo_1Qqq';
-        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        const LOGO_BASE64 = ''; // Insira sua logo Base64 aqui
-
-        lucide.createIcons();
+        const SUPABASE_URL = 'https://tiwolqggaatrrpuahsvu.supabase.co'
+        const SUPABASE_KEY = 'sb_publishable_ro9Yx3P9H-nM9Vgt0lA6eg_Eoo_1Qqq'
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
 
         function maskWhatsApp(v) { v.value = v.value.replace(/\D/g, "").replace(/^(\d{2})(\d)/g, "($1) $2").replace(/(\d{5})(\d)/, "$1-$2"); }
         function maskCPF(v) { v.value = v.value.replace(/\D/g, "").replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d{1,2})$/, "$1-$2"); }
         function maskCEP(v) { v.value = v.value.replace(/\D/g, "").replace(/^(\d{5})(\d)/, "$1-$2"); }
 
-        function go(id) {
+        function switchPage(p) {
             document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            document.querySelectorAll('nav button, aside button').forEach(b => b.classList.remove('nav-active', 'opacity-100'));
-            const nid = id.split('-')[1];
-            if(document.getElementById('m-'+nid)) document.getElementById('m-'+nid).classList.add('nav-active');
-            if(document.getElementById('d-'+nid)) document.getElementById('d-'+nid).classList.add('nav-active', 'opacity-100');
-            refresh();
+            document.getElementById(p).classList.add('active');
+            document.querySelectorAll('.sidebar-active').forEach(a => a.classList.remove('sidebar-active'));
+            document.getElementById('nav-' + p.split('-')[1]).classList.add('sidebar-active');
+            atualizarDados();
         }
 
-        async function refresh() {
-            try {
-                const { count: c } = await _supabase.from('clientes').select('*', { count: 'exact', head: true });
-                const { count: o } = await _supabase.from('ordens_servico').select('*', { count: 'exact', head: true });
-                document.getElementById('dash-clientes').innerText = c || 0;
-                document.getElementById('dash-os').innerText = o || 0;
-                loadClients(); loadOS();
-            } catch (e) { alert("Conexão interrompida. Verifique o Supabase."); }
+        async function atualizarDados() {
+            const { count: aCount } = await _supabase.from('ordens_servico').select('*', { count: 'exact', head: true }).eq('status', 'Aberta');
+            const { count: fCount } = await _supabase.from('ordens_servico').select('*', { count: 'exact', head: true }).eq('status', 'Finalizada');
+
+            document.getElementById('dash-abertas').innerText = aCount || 0;
+            document.getElementById('dash-finalizadas').innerText = fCount || 0;
+            
+            await carregarClientes(); await carregarOS();
         }
 
-        function abrirModalCliente(cliente = null) {
-            document.getElementById('form-cliente').reset();
-            document.getElementById('c-id').value = cliente ? cliente.id : '';
-            if(cliente) {
-                document.getElementById('c-nome').value = cliente.nome;
-                document.getElementById('c-whatsapp').value = cliente.whatsapp || '';
-                document.getElementById('c-cpf').value = cliente.cpf_cnpj || '';
-                document.getElementById('c-email').value = cliente.email || '';
-                document.getElementById('c-cep').value = cliente.cep || '';
-                document.getElementById('c-cidade').value = cliente.cidade || '';
-                document.getElementById('c-rua').value = cliente.rua || '';
-                document.getElementById('c-numero').value = cliente.numero || '';
-                document.getElementById('c-obs').value = cliente.observacoes || '';
-            }
-            modal_cliente.showModal();
-        }
-
-        async function loadClients() {
+        async function carregarClientes() {
             const { data } = await _supabase.from('clientes').select('*').order('id', {ascending: false});
-            const box = document.getElementById('lista-clientes'); box.innerHTML = '';
+            const lista = document.getElementById('lista-clientes'); lista.innerHTML = '';
             data.forEach(c => {
-                const json = JSON.stringify(c).replace(/'/g, "&apos;");
-                box.innerHTML += `<div class="glass p-6 rounded-[2rem] flex justify-between items-center group hover:border-emerald-500/50 transition-all">
-                    <div><p class="font-black text-xl leading-none uppercase italic">${c.nome}</p><p class="text-[10px] opacity-30 mt-2 tracking-widest">${c.whatsapp || 'CONTATO INDISPONÍVEL'}</p></div>
-                    <button onclick='abrirModalCliente(${json})' class="btn btn-ghost btn-circle text-emerald-500"><i data-lucide="edit-3"></i></button>
-                </div>`;
+                lista.innerHTML += `<tr>
+                    <td class="text-xs font-black text-slate-400">#${c.id}</td>
+                    <td class="font-black text-slate-800">${c.nome}</td>
+                    <td>${c.whatsapp || '-'}</td>
+                    <td class="text-center flex justify-center gap-2">
+                        <button onclick="abrirEdicaoCliente(${c.id})" class="btn btn-xs border-slate-200 bg-slate-50 text-slate-600 font-bold hover:bg-slate-200">EDITAR</button>
+                        <button onclick="excluirCliente(${c.id})" class="btn btn-xs border-red-100 bg-red-50 text-red-500 font-bold hover:bg-red-100">EXCLUIR</button>
+                    </td></tr>`;
             });
-            const sel = document.getElementById('os-cliente'); sel.innerHTML = '<option value="">VINCULAR CLIENTE...</option>';
+            const sel = document.getElementById('os-cliente'); sel.innerHTML = '<option value="">Selecione o Cliente...</option>';
             data.forEach(c => sel.innerHTML += `<option value="${c.id}">${c.nome}</option>`);
-            lucide.createIcons();
         }
 
-        async function salvarCliente(e) {
-            e.preventDefault();
-            const id = document.getElementById('c-id').value;
-            const p = { nome: document.getElementById('c-nome').value, whatsapp: document.getElementById('c-whatsapp').value, cpf_cnpj: document.getElementById('c-cpf').value, email: document.getElementById('c-email').value, cep: document.getElementById('c-cep').value, cidade: document.getElementById('c-cidade').value, rua: document.getElementById('c-rua').value, numero: document.getElementById('c-numero').value, observacoes: document.getElementById('c-obs').value };
-            const { error } = id ? await _supabase.from('clientes').update(p).eq('id', id) : await _supabase.from('clientes').insert([p]);
-            if(!error) { modal_cliente.close(); refresh(); } else { alert(error.message); }
-        }
-
-        function addItem(d = '', v = '') {
-            const div = document.createElement('div'); div.className = 'flex gap-3 items-center bg-white/5 p-3 rounded-2xl';
-            div.innerHTML = `<input type="text" placeholder="Serviço ou Peça" class="input input-sm flex-1 item-d" value="${d}" oninput="calcOS()">
-                             <input type="number" placeholder="R$" class="input input-sm w-28 text-emerald-500 font-black" value="${v}" step="0.01" oninput="calcOS()">
-                             <button type="button" class="text-red-500 px-2" onclick="this.parentElement.remove(); calcOS();">✕</button>`;
-            document.getElementById('container-itens').appendChild(div);
-        }
-
-        function calcOS() {
-            const t = Array.from(document.querySelectorAll('.item-v')).reduce((s, i) => s + parseFloat(i.value || 0), 0);
-            document.getElementById('total-display').innerText = `R$ ${t.toFixed(2)}`;
-            return t;
-        }
-
-        function abrirModalOS() { document.getElementById('form-os').reset(); document.getElementById('container-itens').innerHTML = ''; addItem(); modal_os.showModal(); }
-
-        async function loadOS() {
+        async function carregarOS() {
             const { data } = await _supabase.from('ordens_servico').select('*, clientes(nome)').order('id', {ascending: false});
-            const box = document.getElementById('lista-os'); box.innerHTML = '';
+            const lista = document.getElementById('lista-os'); lista.innerHTML = '';
             data.forEach(os => {
-                box.innerHTML += `<tr class="hover:bg-white/2 transition-all">
-                    <td class="py-6 pl-8 font-black opacity-20 italic">#${os.id}</td>
-                    <td class="font-bold text-xs uppercase">${os.equipamento}</td>
-                    <td class="text-center"><button onclick="pdfOS(${os.id})" class="btn btn-ghost btn-xs text-emerald-500 font-black italic underline">EXPORTAR</button></td>
-                </tr>`;
+                const badge = os.status === 'Aberta' ? 'badge-aberta' : 'badge-finalizada';
+                lista.innerHTML += `<tr>
+                    <td class="font-black text-slate-800">#${os.id}</td>
+                    <td class="font-black text-xs uppercase">${os.clientes ? os.clientes.nome : 'N/A'}</td>
+                    <td>${os.equipamento}</td>
+                    <td><span onclick="alternarStatus(${os.id}, '${os.status}')" class="badge badge-lg ${badge} cursor-pointer hover:opacity-80">${os.status.toUpperCase()}</span></td>
+                    <td class="flex justify-center gap-2">
+                        <button onclick="abrirEdicaoOS(${os.id})" class="btn btn-xs bg-slate-100 text-slate-600 font-bold border-none">EDITAR</button>
+                        <button onclick="gerarPDF_OS(${os.id})" class="btn btn-xs bg-slate-900 text-white font-bold border-none">O.S</button>
+                        <button onclick="gerarPDF_Garantia(${os.id})" class="btn btn-xs btn-outline font-bold">GARANTIA</button>
+                    </td></tr>`;
             });
         }
 
-        async function salvarOS(e) {
-            e.preventDefault();
-            const its = Array.from(document.querySelectorAll('.item-d')).map((inp, i) => ({ d: inp.value, v: parseFloat(document.querySelectorAll('.item-v')[i].value || 0) })).filter(it => it.d);
-            const p = { cliente_id: parseInt(document.getElementById('os-cliente').value), equipamento: document.getElementById('os-equipamento').value, defeito_relatado: document.getElementById('os-defeito').value, laudo_tecnico: document.getElementById('os-laudo').value, itens: its, valor_total: calcOS(), status: 'Finalizada' };
-            const { data, error } = await _supabase.from('ordens_servico').insert([p]).select().single();
-            if(!error) { modal_os.close(); refresh(); pdfOS(data.id); }
+        async function alternarStatus(id, atual) {
+            const novo = atual === 'Aberta' ? 'Finalizada' : 'Aberta';
+            await _supabase.from('ordens_servico').update({ status: novo }).eq('id', id);
+            atualizarDados();
         }
 
-        async function pdfOS(id) {
+        function prepararNovoCliente() { document.getElementById('form-cliente').reset(); document.getElementById('c-id').value = ""; document.getElementById('titulo-modal-cliente').innerText = "Cadastro de Cliente"; modal_cliente.showModal(); }
+        async function abrirEdicaoCliente(id) { const { data: c } = await _supabase.from('clientes').select('*').eq('id', id).single(); document.getElementById('c-id').value = c.id; document.getElementById('c-nome').value = c.nome; document.getElementById('c-whatsapp').value = c.whatsapp || ''; document.getElementById('c-cpf').value = c.cpf_cnpj || ''; document.getElementById('c-email').value = c.email || ''; document.getElementById('c-cep').value = c.cep || ''; document.getElementById('c-cidade').value = c.cidade || ''; document.getElementById('c-rua').value = c.rua || ''; document.getElementById('c-numero').value = c.numero || ''; document.getElementById('titulo-modal-cliente').innerText = "Editar Cliente"; modal_cliente.showModal(); }
+        async function salvarCliente(e) { e.preventDefault(); const id = document.getElementById('c-id').value; const p = { nome: document.getElementById('c-nome').value, whatsapp: document.getElementById('c-whatsapp').value, cpf_cnpj: document.getElementById('c-cpf').value, email: document.getElementById('c-email').value, cep: document.getElementById('c-cep').value, cidade: document.getElementById('c-cidade').value, rua: document.getElementById('c-rua').value, numero: document.getElementById('c-numero').value }; if(id) await _supabase.from('clientes').update(p).eq('id', id); else await _supabase.from('clientes').insert([p]); modal_cliente.close(); atualizarDados(); }
+        async function excluirCliente(id) { if(confirm("Deseja excluir este cliente?")) { await _supabase.from('ordens_servico').delete().eq('cliente_id', id); await _supabase.from('clientes').delete().eq('id', id); atualizarDados(); } }
+
+        function prepararNovaOS() { document.getElementById('form-os').reset(); document.getElementById('os-id').value = ""; document.getElementById('titulo-modal-os').innerText = "Nova Ordem de Serviço"; modal_os.showModal(); }
+        async function abrirEdicaoOS(id) { const { data: os } = await _supabase.from('ordens_servico').select('*').eq('id', id).single(); document.getElementById('os-id').value = os.id; document.getElementById('os-cliente').value = os.cliente_id; document.getElementById('os-equipamento').value = os.equipamento; document.getElementById('os-defeito').value = os.defeito_relatado; document.getElementById('os-status-form').value = os.status; document.getElementById('os-valor').value = os.valor_total; document.getElementById('os-garantia').value = os.garantia_dias; document.getElementById('titulo-modal-os').innerText = `Editar O.S #${os.id}`; modal_os.showModal(); }
+        async function salvarOS(e) { e.preventDefault(); const id = document.getElementById('os-id').value; const p = { cliente_id: parseInt(document.getElementById('os-cliente').value), equipamento: document.getElementById('os-equipamento').value, defeito_relatado: document.getElementById('os-defeito').value, status: document.getElementById('os-status-form').value, valor_total: parseFloat(document.getElementById('os-valor').value || 0), garantia_dias: parseInt(document.getElementById('os-garantia').value || 90) }; if(id) await _supabase.from('ordens_servico').update(p).eq('id', id); else await _supabase.from('ordens_servico').insert([p]); modal_os.close(); atualizarDados(); }
+
+        // --- PDFS PROFISSIONAIS ---
+
+        async function gerarPDF_OS(id) {
+            const { data: os } = await _supabase.from('ordens_servico').select('*, clientes(*)').eq('id', id).single();
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            doc.setFillColor(179, 242, 77); doc.rect(0, 0, 210, 40, 'F');
+            doc.setTextColor(0); doc.setFontSize(24); doc.setFont(undefined, 'bold'); doc.text('ORDEM DE SERVIÇO', 105, 25, {align: 'center'});
+            doc.setFontSize(10); doc.setFont(undefined, 'normal');
+            doc.text(`Protocolo: #${os.id} | Data: ${new Date().toLocaleDateString()}`, 15, 50);
+            doc.line(15, 53, 195, 53);
+            doc.setFont(undefined, 'bold'); doc.text('CLIENTE:', 15, 62); doc.setFont(undefined, 'normal');
+            doc.text(`${os.clientes.nome} | Whats: ${os.clientes.whatsapp || '-'}`, 15, 68);
+            doc.setFont(undefined, 'bold'); doc.text('APARELHO:', 15, 80); doc.setFont(undefined, 'normal');
+            doc.text(`${os.equipamento}`, 15, 86);
+            doc.setFont(undefined, 'bold'); doc.text('DEFEITO RELATADO:', 15, 98); doc.setFont(undefined, 'normal');
+            doc.text(`${os.defeito_relatado}`, 15, 104, {maxWidth: 180});
+            doc.line(15, 115, 195, 115);
+            doc.setFontSize(12); doc.text(`VALOR TOTAL: R$ ${os.valor_total.toFixed(2)}`, 15, 125);
+            doc.text(`GARANTIA: ${os.garantia_dias} DIAS`, 195, 125, {align: 'right'});
+            doc.save(`OS_FIX_${os.id}.pdf`);
+        }
+
+        async function gerarPDF_Garantia(id) {
             const { data: os } = await _supabase.from('ordens_servico').select('*, clientes(*)').eq('id', id).single();
             const doc = new jspdf.jsPDF();
-            doc.setFillColor(10, 10, 10); doc.rect(0, 0, 210, 55, 'F');
-            doc.setTextColor(255); doc.setFontSize(28); doc.text('ORDEM DE SERVIÇO', 15, 35);
-            doc.setTextColor(16, 185, 129); doc.setFontSize(10); doc.text('ELETRONICFIX TITANIUM ERP', 15, 42);
-            doc.setTextColor(0); doc.text(`Protocolo: #${os.id} | ${new Date().toLocaleDateString()}`, 15, 65);
-            doc.setFont(undefined, 'bold'); doc.text(`Cliente: ${os.clientes.nome}`, 15, 80); doc.setFont(undefined, 'normal');
-            doc.text(`Equipamento: ${os.equipamento}`, 15, 95);
-            doc.text(`Laudo: ${os.laudo_tecnico || 'Padrão'}`, 15, 105, {maxWidth: 180});
-            let y = 130; doc.setFont(undefined, 'bold'); doc.text('ITENS E VALORES:', 15, y); y += 10;
-            os.itens.forEach(it => { doc.setFont(undefined, 'normal'); doc.text(it.d, 15, y); doc.text(`R$ ${it.v.toFixed(2)}`, 170, y); y += 8; });
-            doc.setFontSize(16); doc.text(`TOTAL FINAL: R$ ${os.valor_total.toFixed(2)}`, 15, y + 15);
-            doc.save(`OS_CARBON_${os.id}.pdf`);
+            
+            doc.setFillColor(249, 115, 22); doc.rect(0, 0, 210, 40, 'F'); // Laranja para Garantia
+            doc.setTextColor(255); doc.setFontSize(22); doc.setFont(undefined, 'bold'); doc.text('CERTIFICADO DE GARANTIA', 105, 25, {align: 'center'});
+            doc.setTextColor(0); doc.setFontSize(14);
+            doc.text(`A EletronicFix garante o reparo do equipamento:`, 15, 60);
+            doc.setFont(undefined, 'bold'); doc.text(`${os.equipamento}`, 15, 70); doc.setFont(undefined, 'normal');
+            doc.text(`Referente à O.S. #${os.id} para o cliente ${os.clientes.nome}.`, 15, 80);
+            doc.text(`Período de Garantia: ${os.garantia_dias} dias.`, 15, 95);
+            doc.setFontSize(10);
+            doc.text('Termos: A garantia cobre apenas o reparo efetuado. Danos físicos ou líquidos anulam a mesma.', 15, 115, {maxWidth: 180});
+            doc.save(`Garantia_FIX_${os.id}.pdf`);
         }
 
-        async function buscarCep(c) {
-            if(!c) return; const r = await fetch(`https://viacep.com.br/ws/${c.replace(/\D/g, '')}/json/`); const d = await r.json();
-            if(!d.erro) { document.getElementById('c-rua').value = d.logradouro; document.getElementById('c-cidade').value = d.localidade; }
-        }
-        go('sec-dash');
+        async function buscarCep(c) { if(!c) return; const r = await fetch(`https://viacep.com.br/ws/${c.replace(/\D/g, '')}/json/`); const d = await r.json(); if(!d.erro) { document.getElementById('c-rua').value = d.logradouro; document.getElementById('c-cidade').value = d.localidade; } }
+        
+        window.onload = atualizarDados;
     </script>
 </body>
 </html>
