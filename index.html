@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="pt-br" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>EletronicFix | Carbon ERP</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.4.19/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
+        :root { --p-color: #10b981; --bg-main: #050505; }
+        body { background-color: var(--bg-main); font-family: 'Plus Jakarta Sans', sans-serif; color: #e2e8f0; overflow-x: hidden; }
+        .glass { background: rgba(23, 23, 23, 0.7); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.05); }
+        .nav-active { color: var(--p-color) !important; background: rgba(16, 185, 129, 0.1); border-radius: 16px; box-shadow: 0 0 15px rgba(16, 185, 129, 0.2); }
+        .page-section { display: none; }
+        .page-section.active { display: block; animation: pageIn 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        @keyframes pageIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .btn-carbon { background: linear-gradient(135deg, #10b981, #059669); color: #fff; font-weight: 800; border: none; transition: all 0.3s; }
+        .btn-carbon:hover { transform: translateY(-2px); box-shadow: 0 10px 20px -10px #10b981; }
+        .modal-box { background: #0a0a0a; border: 1px solid #1f1f23; border-radius: 28px; padding: 0; max-height: 95vh; }
+        input, select, textarea { background: #111 !important; border: 1px solid #222 !important; color: #fff !important; border-radius: 14px !important; }
+        input:focus { border-color: var(--p-color) !important; box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2) !important; }
+    </style>
+</head>
+<body class="pb-24 md:pb-0 md:pl-72">
+
+    <aside class="fixed inset-y-0 left-0 w-72 hidden md:flex flex-col glass border-r border-white/5 z-50 p-6">
+        <div class="mb-12 flex justify-center"><img src="logo.png" class="h-16 object-contain"></div>
+        <nav class="space-y-3 flex-1">
+            <button onclick="go('sec-dash')" id="d-dash" class="flex items-center gap-4 w-full p-4 nav-active font-bold"><i data-lucide="layout-grid"></i> Dashboard</button>
+            <button onclick="go('sec-clientes')" id="d-clientes" class="flex items-center gap-4 w-full p-4 font-bold opacity-40 hover:opacity-100 transition-all"><i data-lucide="user-square-2"></i> Clientes</button>
+            <button onclick="go('sec-os')" id="d-os" class="flex items-center gap-4 w-full p-4 font-bold opacity-40 hover:opacity-100 transition-all"><i data-lucide="cpu"></i> Ordens de Serviço</button>
+        </nav>
+        <div class="mt-auto p-5 rounded-2xl bg-white/5 text-center"><p class="text-[10px] font-black uppercase tracking-widest text-emerald-500">EletronicFix Pro 2026</p></div>
+    </aside>
+
+    <nav class="md:hidden fixed bottom-6 left-6 right-6 h-18 glass rounded-[2rem] flex justify-around items-center z-50 shadow-2xl px-2">
+        <button onclick="go('sec-dash')" id="m-dash" class="p-4 nav-active"><i data-lucide="layout-grid"></i></button>
+        <button onclick="go('sec-clientes')" id="m-clientes" class="p-4 opacity-30"><i data-lucide="user-square-2"></i></button>
+        <button onclick="go('sec-os')" id="m-os" class="p-4 opacity-30"><i data-lucide="cpu"></i></button>
+    </nav>
+
+    <main class="p-6 md:p-14 max-w-6xl mx-auto">
+        
+        <section id="sec-dash" class="page-section active">
+            <div class="flex items-center justify-between mb-12">
+                <h1 class="text-3xl font-black tracking-tighter">CENTRAL DE COMANDO</h1>
+                <div class="badge badge-success gap-2 p-4 font-bold text-xs"><div class="w-2 h-2 rounded-full bg-white animate-pulse"></div> LIVE DATA</div>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="glass p-8 rounded-[2.5rem] relative overflow-hidden group">
+                    <i data-lucide="users" class="absolute -right-2 -bottom-2 w-24 h-24 opacity-5 text-emerald-500 group-hover:scale-110 transition-transform"></i>
+                    <p class="text-4xl font-black text-white" id="dash-clientes">0</p>
+                    <p class="text-[10px] font-bold uppercase opacity-40 tracking-widest">Base de Clientes</p>
+                </div>
+                <div class="glass p-8 rounded-[2.5rem] relative overflow-hidden group">
+                    <i data-lucide="wrench" class="absolute -right-2 -bottom-2 w-24 h-24 opacity-5 text-blue-500 group-hover:scale-110 transition-transform"></i>
+                    <p class="text-4xl font-black text-white" id="dash-os">0</p>
+                    <p class="text-[10px] font-bold uppercase opacity-40 tracking-widest">Serviços Ativos</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="sec-clientes" class="page-section">
+            <div class="flex justify-between items-center mb-10">
+                <h1 class="text-4xl font-black tracking-tighter italic">CLIENTES</h1>
+                <button class="btn btn-carbon btn-sm md:btn-md px-8 rounded-2xl" onclick="abrirModalCliente()">+ ADICIONAR</button>
+            </div>
+            <div id="lista-clientes" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+        </section>
+
+        <section id="sec-os" class="page-section">
+            <div class="flex justify-between items-center mb-10">
+                <h1 class="text-4xl font-black tracking-tighter italic">ORDENS</h1>
+                <button class="btn btn-carbon btn-sm md:btn-md px-8 rounded-2xl" onclick="abrirModalOS()">+ NOVA O.S</button>
+            </div>
+            <div class="glass rounded-3xl overflow-hidden shadow-2xl">
+                <div class="overflow-x-auto"><table class="table w-full"><thead class="bg-white/5"><tr><th class="py-6">PROTOCOLO</th><th>APARELHO</th><th class="text-center">PDF</th></tr></thead><tbody id="lista-os"></tbody></table></div>
+            </div>
+        </section>
+    </main>
+
+    <dialog id="modal_cliente" class="modal modal-bottom sm:modal-middle">
+        <div class="modal-box w-11/12 max-w-4xl">
+            <div class="p-8 border-b border-white/5 flex justify-between items-center bg-white/5">
+                <h3 class="font-black text-xl italic uppercase tracking-widest text-emerald-500">Gestão de Identidade</h3>
+                <button class="btn btn-sm btn-circle btn-ghost" onclick="modal_cliente.close()">✕</button>
+            </div>
+            <form id="form-cliente" onsubmit="salvarCliente(event)" class="p-8 space-y-6 overflow-y-auto">
+                <input type="hidden" id="c-id">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-4">
+                        <label class="text-[10px] font-bold opacity-40 uppercase">Nome e Contato</label>
+                        <input type="text" id="c-nome" placeholder="Nome Completo *" class="input w-full font-bold h-14" required />
+                        <input type="text" id="c-whatsapp" placeholder="WhatsApp" class="input w-full h-14" oninput="maskWhatsApp(this)" maxlength="15" />
+                        <input type="text" id="c-cpf" placeholder="CPF ou CNPJ" class="input w-full h-14" oninput="maskCPF(this)" maxlength="18" />
+                        <input type="email" id="c-email" placeholder="E-mail" class="input w-full h-14" />
+                    </div>
+                    <div class="space-y-4">
+                        <label class="text-[10px] font-bold opacity-40 uppercase">Localização</label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <input type="text" id="c-cep" placeholder="CEP" class="input border-emerald-500/30 font-black text-emerald-500" oninput="maskCEP(this)" onblur="buscarCep(this.value)" maxlength="9" />
+                            <input type="text" id="c-cidade" placeholder="Cidade" class="input col-span-2" />
+                        </div>
+                        <input type="text" id="c-rua" placeholder="Logradouro" class="input w-full" />
+                        <input type="text" id="c-numero" placeholder="Número" class="input w-full" />
+                        <textarea id="c-obs" placeholder="Notas internas..." class="textarea w-full h-14"></textarea>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-carbon w-full h-16 text-lg italic uppercase">Efetivar Registro</button>
+            </form>
+        </div>
+    </dialog>
+
+    <dialog id="modal_os" class="modal modal-bottom sm:modal-middle">
+        <div class="modal-box w-11/12 max-w-4xl">
+            <div class="p-8 border-b border-white/5 font-black uppercase text-blue-500 italic">Central de Reparo</div>
+            <form id="form-os" onsubmit="salvarOS(event)" class="p-8 space-y-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <select id="os-cliente" class="select select-bordered w-full h-14 font-black" required></select>
+                    <input type="text" id="os-equipamento" placeholder="Equipamento" class="input w-full h-14 font-bold" required />
+                    <textarea id="os-defeito" placeholder="Defeito do Cliente" class="textarea h-24" required></textarea>
+                    <textarea id="os-laudo" placeholder="Sua Solução Técnica" class="textarea border-emerald-500/30 h-24"></textarea>
+                </div>
+                <div class="p-6 rounded-[2rem] bg-white/5 border border-white/5">
+                    <h4 class="text-[10px] font-black uppercase text-emerald-500 mb-6 tracking-widest">Detalhamento Financeiro</h4>
+                    <div id="container-itens" class="space-y-3"></div>
+                    <button type="button" class="btn btn-ghost btn-xs mt-4 text-emerald-500" onclick="addItem()">+ INSERIR ITEM/SERVIÇO</button>
+                </div>
+                <div class="flex justify-between items-center bg-emerald-500/10 p-6 rounded-3xl border border-emerald-500/20">
+                    <span class="text-xs font-black uppercase opacity-60">Valor Consolidado</span>
+                    <span class="text-4xl font-black text-emerald-500" id="total-display">R$ 0,00</span>
+                </div>
+                <button type="submit" class="btn btn-carbon w-full h-16 text-lg italic">FINALIZAR E GERAR DOCUMENTO</button>
+            </form>
+        </div>
+    </dialog>
+
+    <script>
+        const SUPABASE_URL = 'https://tiwolqggaatrrpuahsvu.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_ro9Yx3P9H-nM9Vgt0lA6eg_Eoo_1Qqq';
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const LOGO_BASE64 = ''; // Insira sua logo Base64 aqui
+
+        lucide.createIcons();
+
+        function maskWhatsApp(v) { v.value = v.value.replace(/\D/g, "").replace(/^(\d{2})(\d)/g, "($1) $2").replace(/(\d{5})(\d)/, "$1-$2"); }
+        function maskCPF(v) { v.value = v.value.replace(/\D/g, "").replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d{1,2})$/, "$1-$2"); }
+        function maskCEP(v) { v.value = v.value.replace(/\D/g, "").replace(/^(\d{5})(\d)/, "$1-$2"); }
+
+        function go(id) {
+            document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            document.querySelectorAll('nav button, aside button').forEach(b => b.classList.remove('nav-active', 'opacity-100'));
+            const nid = id.split('-')[1];
+            if(document.getElementById('m-'+nid)) document.getElementById('m-'+nid).classList.add('nav-active');
+            if(document.getElementById('d-'+nid)) document.getElementById('d-'+nid).classList.add('nav-active', 'opacity-100');
+            refresh();
+        }
+
+        async function refresh() {
+            try {
+                const { count: c } = await _supabase.from('clientes').select('*', { count: 'exact', head: true });
+                const { count: o } = await _supabase.from('ordens_servico').select('*', { count: 'exact', head: true });
+                document.getElementById('dash-clientes').innerText = c || 0;
+                document.getElementById('dash-os').innerText = o || 0;
+                loadClients(); loadOS();
+            } catch (e) { alert("Conexão interrompida. Verifique o Supabase."); }
+        }
+
+        function abrirModalCliente(cliente = null) {
+            document.getElementById('form-cliente').reset();
+            document.getElementById('c-id').value = cliente ? cliente.id : '';
+            if(cliente) {
+                document.getElementById('c-nome').value = cliente.nome;
+                document.getElementById('c-whatsapp').value = cliente.whatsapp || '';
+                document.getElementById('c-cpf').value = cliente.cpf_cnpj || '';
+                document.getElementById('c-email').value = cliente.email || '';
+                document.getElementById('c-cep').value = cliente.cep || '';
+                document.getElementById('c-cidade').value = cliente.cidade || '';
+                document.getElementById('c-rua').value = cliente.rua || '';
+                document.getElementById('c-numero').value = cliente.numero || '';
+                document.getElementById('c-obs').value = cliente.observacoes || '';
+            }
+            modal_cliente.showModal();
+        }
+
+        async function loadClients() {
+            const { data } = await _supabase.from('clientes').select('*').order('id', {ascending: false});
+            const box = document.getElementById('lista-clientes'); box.innerHTML = '';
+            data.forEach(c => {
+                const json = JSON.stringify(c).replace(/'/g, "&apos;");
+                box.innerHTML += `<div class="glass p-6 rounded-[2rem] flex justify-between items-center group hover:border-emerald-500/50 transition-all">
+                    <div><p class="font-black text-xl leading-none uppercase italic">${c.nome}</p><p class="text-[10px] opacity-30 mt-2 tracking-widest">${c.whatsapp || 'CONTATO INDISPONÍVEL'}</p></div>
+                    <button onclick='abrirModalCliente(${json})' class="btn btn-ghost btn-circle text-emerald-500"><i data-lucide="edit-3"></i></button>
+                </div>`;
+            });
+            const sel = document.getElementById('os-cliente'); sel.innerHTML = '<option value="">VINCULAR CLIENTE...</option>';
+            data.forEach(c => sel.innerHTML += `<option value="${c.id}">${c.nome}</option>`);
+            lucide.createIcons();
+        }
+
+        async function salvarCliente(e) {
+            e.preventDefault();
+            const id = document.getElementById('c-id').value;
+            const p = { nome: document.getElementById('c-nome').value, whatsapp: document.getElementById('c-whatsapp').value, cpf_cnpj: document.getElementById('c-cpf').value, email: document.getElementById('c-email').value, cep: document.getElementById('c-cep').value, cidade: document.getElementById('c-cidade').value, rua: document.getElementById('c-rua').value, numero: document.getElementById('c-numero').value, observacoes: document.getElementById('c-obs').value };
+            const { error } = id ? await _supabase.from('clientes').update(p).eq('id', id) : await _supabase.from('clientes').insert([p]);
+            if(!error) { modal_cliente.close(); refresh(); } else { alert(error.message); }
+        }
+
+        function addItem(d = '', v = '') {
+            const div = document.createElement('div'); div.className = 'flex gap-3 items-center bg-white/5 p-3 rounded-2xl';
+            div.innerHTML = `<input type="text" placeholder="Serviço ou Peça" class="input input-sm flex-1 item-d" value="${d}" oninput="calcOS()">
+                             <input type="number" placeholder="R$" class="input input-sm w-28 text-emerald-500 font-black" value="${v}" step="0.01" oninput="calcOS()">
+                             <button type="button" class="text-red-500 px-2" onclick="this.parentElement.remove(); calcOS();">✕</button>`;
+            document.getElementById('container-itens').appendChild(div);
+        }
+
+        function calcOS() {
+            const t = Array.from(document.querySelectorAll('.item-v')).reduce((s, i) => s + parseFloat(i.value || 0), 0);
+            document.getElementById('total-display').innerText = `R$ ${t.toFixed(2)}`;
+            return t;
+        }
+
+        function abrirModalOS() { document.getElementById('form-os').reset(); document.getElementById('container-itens').innerHTML = ''; addItem(); modal_os.showModal(); }
+
+        async function loadOS() {
+            const { data } = await _supabase.from('ordens_servico').select('*, clientes(nome)').order('id', {ascending: false});
+            const box = document.getElementById('lista-os'); box.innerHTML = '';
+            data.forEach(os => {
+                box.innerHTML += `<tr class="hover:bg-white/2 transition-all">
+                    <td class="py-6 pl-8 font-black opacity-20 italic">#${os.id}</td>
+                    <td class="font-bold text-xs uppercase">${os.equipamento}</td>
+                    <td class="text-center"><button onclick="pdfOS(${os.id})" class="btn btn-ghost btn-xs text-emerald-500 font-black italic underline">EXPORTAR</button></td>
+                </tr>`;
+            });
+        }
+
+        async function salvarOS(e) {
+            e.preventDefault();
+            const its = Array.from(document.querySelectorAll('.item-d')).map((inp, i) => ({ d: inp.value, v: parseFloat(document.querySelectorAll('.item-v')[i].value || 0) })).filter(it => it.d);
+            const p = { cliente_id: parseInt(document.getElementById('os-cliente').value), equipamento: document.getElementById('os-equipamento').value, defeito_relatado: document.getElementById('os-defeito').value, laudo_tecnico: document.getElementById('os-laudo').value, itens: its, valor_total: calcOS(), status: 'Finalizada' };
+            const { data, error } = await _supabase.from('ordens_servico').insert([p]).select().single();
+            if(!error) { modal_os.close(); refresh(); pdfOS(data.id); }
+        }
+
+        async function pdfOS(id) {
+            const { data: os } = await _supabase.from('ordens_servico').select('*, clientes(*)').eq('id', id).single();
+            const doc = new jspdf.jsPDF();
+            doc.setFillColor(10, 10, 10); doc.rect(0, 0, 210, 55, 'F');
+            doc.setTextColor(255); doc.setFontSize(28); doc.text('ORDEM DE SERVIÇO', 15, 35);
+            doc.setTextColor(16, 185, 129); doc.setFontSize(10); doc.text('ELETRONICFIX TITANIUM ERP', 15, 42);
+            doc.setTextColor(0); doc.text(`Protocolo: #${os.id} | ${new Date().toLocaleDateString()}`, 15, 65);
+            doc.setFont(undefined, 'bold'); doc.text(`Cliente: ${os.clientes.nome}`, 15, 80); doc.setFont(undefined, 'normal');
+            doc.text(`Equipamento: ${os.equipamento}`, 15, 95);
+            doc.text(`Laudo: ${os.laudo_tecnico || 'Padrão'}`, 15, 105, {maxWidth: 180});
+            let y = 130; doc.setFont(undefined, 'bold'); doc.text('ITENS E VALORES:', 15, y); y += 10;
+            os.itens.forEach(it => { doc.setFont(undefined, 'normal'); doc.text(it.d, 15, y); doc.text(`R$ ${it.v.toFixed(2)}`, 170, y); y += 8; });
+            doc.setFontSize(16); doc.text(`TOTAL FINAL: R$ ${os.valor_total.toFixed(2)}`, 15, y + 15);
+            doc.save(`OS_CARBON_${os.id}.pdf`);
+        }
+
+        async function buscarCep(c) {
+            if(!c) return; const r = await fetch(`https://viacep.com.br/ws/${c.replace(/\D/g, '')}/json/`); const d = await r.json();
+            if(!d.erro) { document.getElementById('c-rua').value = d.logradouro; document.getElementById('c-cidade').value = d.localidade; }
+        }
+        go('sec-dash');
+    </script>
+</body>
+</html>
